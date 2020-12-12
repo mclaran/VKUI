@@ -126,13 +126,21 @@ const HorizontalScrollArrow: FC<HorizontalScrollArrowProps> = (props) => {
 };
 
 const HorizontalScroll: FC<HorizontalScrollProps> = (props) => {
-  const { children, getScrollToLeft, getScrollToRight, showArrows = false, scrollAnimationDuration, className, hasMouse, ...restProps } = props;
+  const {
+    children,
+    getScrollToLeft,
+    getScrollToRight,
+    showArrows = false,
+    scrollAnimationDuration,
+    className,
+    hasMouse,
+    ...restProps
+  } = props;
 
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
-  const [initialScrollWidth, setInitialScrollWidth] = useState(0);
-
+  const initialScrollWidthRef = useRef(0);
   const isCustomScrollingRef = useRef(false);
 
   const scrollerRef = useRef<HTMLDivElement>(null);
@@ -149,7 +157,7 @@ const HorizontalScroll: FC<HorizontalScrollProps> = (props) => {
       onScrollToRightBorder: () => setCanScrollRight(false),
       onScrollEnd: () => isCustomScrollingRef.current = false,
       onScrollStart: () => isCustomScrollingRef.current = true,
-      initialScrollWidth,
+      initialScrollWidth: initialScrollWidthRef.current,
       scrollAnimationDuration,
     }));
     if (animationQueue.current.length === 1) {
@@ -159,25 +167,41 @@ const HorizontalScroll: FC<HorizontalScrollProps> = (props) => {
 
   const onscroll = useCallback(() => {
     if (showArrows && hasMouse && scrollerRef.current && !isCustomScrollingRef.current) {
-      setCanScrollLeft(scrollerRef.current.scrollLeft > 0);
-      setCanScrollRight(scrollerRef.current.scrollLeft + scrollerRef.current.offsetWidth < scrollerRef.current.scrollWidth);
+      const scrollElement = scrollerRef.current;
+
+      setCanScrollLeft(scrollElement.scrollLeft > 0);
+      setCanScrollRight(scrollElement.scrollLeft + scrollElement.offsetWidth < scrollElement.scrollWidth);
     }
   }, [hasMouse]);
 
   useEffect(() => {
     scrollerRef.current && scrollerRef.current.addEventListener('scroll', onscroll);
-    scrollerRef.current && setInitialScrollWidth(scrollerRef.current.scrollWidth);
     return () => scrollerRef.current && scrollerRef.current.removeEventListener('scroll', onscroll);
   }, []);
+
+  useEffect(() => {
+    if (scrollerRef.current) {
+      initialScrollWidthRef.current = scrollerRef.current.scrollWidth;
+      onscroll();
+    }
+  }, [children]);
 
   useEffect(onscroll, [scrollerRef]);
 
   return (
     <div {...restProps} className={classNames(className, getClassName('HorizontalScroll', platform))}>
-      {showArrows && hasMouse && canScrollLeft && <HorizontalScrollArrow direction="left"
-        onClick={() => scrollTo(getScrollToLeft)} />}
-      {showArrows && hasMouse && canScrollRight && <HorizontalScrollArrow direction="right"
-        onClick={() => scrollTo(getScrollToRight)} />}
+      {showArrows && hasMouse && canScrollLeft &&
+      <HorizontalScrollArrow
+        direction="left"
+        onClick={() => scrollTo(getScrollToLeft)}
+      />
+      }
+      {showArrows && hasMouse && canScrollRight &&
+      <HorizontalScrollArrow
+        direction="right"
+        onClick={() => scrollTo(getScrollToRight)}
+      />
+      }
       <div className="HorizontalScroll__in" ref={scrollerRef}>
         <div className="HorizontalScroll__in-wrapper">
           {children}
