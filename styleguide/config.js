@@ -14,12 +14,16 @@ module.exports = {
     StyleGuideRenderer: path.join(__dirname, './Components/StyleGuideRenderer'),
     PathlineRenderer: path.join(__dirname, './Components/PathlineRenderer')
   },
+  pagePerSection: true,
   assetsDir:  path.join(__dirname, `assets`),
   sections: [
     {
-      content: './pages/intro.md'
+      name: 'Readme',
+      content: './pages/intro.md',
+      sectionDepth: 0,
     }, {
       name: 'Начало работы',
+      sectionDepth: 0,
       content: './pages/getting_started.md',
       sections: [
         {
@@ -42,9 +46,11 @@ module.exports = {
           name: 'Режимы подключения',
           content: './pages/modes.md'
         },
-      ]
+      ],
     }, {
       name: 'Components',
+      content: './pages/components.md',
+      sectionDepth: 1,
       sections: [{
         name: 'Layout',
         components: () => [
@@ -184,6 +190,7 @@ module.exports = {
       }]
     }, {
       name: 'Other',
+      sectionDepth: 0,
       sections: [{
         name: 'Helpers',
         content: './pages/helpers.md'
