@@ -96,12 +96,34 @@ export default class Preview extends PreviewParent {
   }
 
   componentDidMount() {
+    this.checkVisibility();
+    window.addEventListener('resize', this.checkVisibility);
+    window.addEventListener('scroll', this.checkVisibility);
     return;
   }
 
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.checkVisibility);
+    window.removeEventListener('scroll', this.checkVisibility);
+  }
+
+  checkVisibility = () => {
+    if (!this.frameRef.current) {
+      return;
+    }
+    const TRIGGER_H = window.innerHeight;
+    const { top, bottom } = this.frameRef.current.getBoundingClientRect();
+    const isVisible = bottom >= -TRIGGER_H && top <= window.innerHeight + TRIGGER_H;
+    if (isVisible !== this.state.isVisible) {
+      this.setState({ isVisible });
+    }
+  }
+
+  frameRef = React.createRef();
+
   render() {
     const { code } = this.props;
-    const { error } = this.state;
+    const { error, isVisible } = this.state;
     return (
       error ?
         <PlaygroundError message={error} /> :
@@ -121,61 +143,71 @@ export default class Preview extends PreviewParent {
               </Layout>
             );
 
+            const frameStyle = {
+              height: styleGuideContext.height,
+              width: styleGuideContext.width,
+              border: '1px solid rgba(0, 0, 0, .12)',
+              display: 'block',
+              margin: 'auto',
+            }
+
             return (
-              <ReactFrame
-                mountTarget="body"
-                style={{
-                  height: styleGuideContext.height,
-                  width: styleGuideContext.width,
-                  border: '1px solid rgba(0, 0, 0, .12)',
-                  display: 'block',
-                  margin: 'auto',
-                }}
-                initialContent={initialFrameContent}
-              >
-                {isEmbedded && (
-                  <button onClick={() => this.setState(s => ({
-                    ...s,
-                    hideEmbeddedApp:!s.hideEmbeddedApp
-                  }))}>
-                    {this.state.hideEmbeddedApp ? "mount embedded app" : "unmount embedded app"}
-                  </button>
+              <div ref={this.frameRef} style={frameStyle}>
+                {isVisible && (
+                  <ReactFrame
+                    mountTarget="body"
+                    style={{
+                      height: styleGuideContext.height,
+                      width: styleGuideContext.width,
+                      border: 'none',
+                    }}
+                    initialContent={initialFrameContent}
+                  >
+                    {isEmbedded && (
+                      <button onClick={() => this.setState(s => ({
+                        ...s,
+                        hideEmbeddedApp:!s.hideEmbeddedApp
+                      }))}>
+                        {this.state.hideEmbeddedApp ? "mount embedded app" : "unmount embedded app"}
+                      </button>
+                    )}
+                    {isEmbedded && this.state.hideEmbeddedApp ? null :
+                      <div className={isPartial ? "vkui__root" : null} style={isEmbedded ? {
+                        marginTop: 8,
+                        position: 'relative',
+                        border: '1px solid #000',
+                        maxWidth: 1024,
+                        width: "calc(100% - 10px)",
+                        height: 600
+                      } : {
+                        position: 'relative',
+                        height: '100%'
+                      }}>
+                        <PrepareFrame integration={styleGuideContext.integration}>
+                          {({ window }) => (
+                            <ConfigProvider
+                              platform={styleGuideContext.platform}
+                              scheme={styleGuideContext.scheme}
+                              webviewType={styleGuideContext.webviewType}
+                            >
+                              <AdaptivityProvider
+                                window={window}
+                                hasMouse={styleGuideContext.hasMouse}
+                              >
+                                {isPartial ? example : (
+                                  <AppRoot embedded={isEmbedded} window={window}>
+                                    {example}
+                                  </AppRoot>
+                                )}
+                              </AdaptivityProvider>
+                            </ConfigProvider>
+                          )}
+                        </PrepareFrame>
+                      </div>
+                    }
+                  </ReactFrame>
                 )}
-                {isEmbedded && this.state.hideEmbeddedApp ? null : 
-                  <div className={isPartial ? "vkui__root" : null} style={isEmbedded ? {
-                    marginTop: 8,
-                    position: 'relative',
-                    border: '1px solid #000',
-                    maxWidth: 1024,
-                    width: "calc(100% - 10px)",
-                    height: 600
-                  } : {
-                    position: 'relative',
-                    height: '100%'
-                  }}>
-                    <PrepareFrame integration={styleGuideContext.integration}>
-                      {({ window }) => (
-                        <ConfigProvider
-                          platform={styleGuideContext.platform}
-                          scheme={styleGuideContext.scheme}
-                          webviewType={styleGuideContext.webviewType}
-                        >
-                          <AdaptivityProvider
-                            window={window}
-                            hasMouse={styleGuideContext.hasMouse}
-                          >
-                            {isPartial ? example : (
-                              <AppRoot embedded={isEmbedded} window={window}>
-                                {example}
-                              </AppRoot>
-                            )}
-                          </AdaptivityProvider>
-                        </ConfigProvider>
-                      )}
-                    </PrepareFrame>
-                  </div>
-                }
-              </ReactFrame>
+              </div>
             )
           }}
         </StyleGuideContext.Consumer>
