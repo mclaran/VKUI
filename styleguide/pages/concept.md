@@ -1,4 +1,4 @@
-Основная концепция VKUI — это адаптивность. Все приложения должны поддерживать и реагировать на адаптивность. Для этого используются [`AdaptivityProvider`](#adaptivityprovider) и [`SplitLayout`](#splitlayout) компоненты.
+Основная концепция VKUI — это адаптивность. Все приложения должны поддерживать и реагировать на адаптивность. Для этого используются [`AdaptivityProvider`](#/Components/Adaptivity?id=adaptivityprovider) и [`SplitLayout`](#/Components/Adaptivity?id=splitlayout) компоненты.
 
 Базовая структура приложения выглядит вот так:
 - `ConfigProvider` для определния темы и платформы устройства
